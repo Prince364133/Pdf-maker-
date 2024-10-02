@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAKE YOUR PDF</title>
+    <script type="text/javascript" src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        h2 {
+            text-align: center;
+        }
+        label, textarea, button {
+            font-size: 18px;
+        }
+        textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            resize: vertical;
+        }
+        button {
+            width: calc(100% - 22px);
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .output, .content-box {
+            max-height: 450px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background-color: #fafafa;
+            border-radius: 4px;
+            padding: 20px;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .output {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Make your PDF </h2>
+  <h6>Powered by BRDL</h6>
+
+    <label for="mathInput">Paste your Content 👇</label>
+    <textarea id="mathInput" placeholder="Support all types of language"></textarea>
+
+    <button onclick="renderMath()">click me 1st</button>
+    <button onclick="convertToPDF()">Get PDF</button>
+
+    <div class="output content-box" id="output">
+        <p>BRDL AI2</p>
+        <div id="mathOutput"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+<script>
+    function replaceSymbols(input) {
+        // Replace specific text with corresponding symbols
+        return input
+            .replace(/degree/g, '°') // Replace 'degree' with '°'
+            .replace(/\^2/g, '²') // Replace '^2' with '²'
+            .replace(/\^3/g, '³') // Replace '^3' with '³'
+            .replace(/plus/g, '+') // Replace 'plus' with '+'
+            .replace(/minus/g, '-') // Replace 'minus' with '-'
+            .replace(/times/g, '×') // Replace 'times' with '×'
+            .replace(/divided by/g, '÷') // Replace 'divided by' with '÷'
+            .replace(/square root of/g, '√') // Replace 'square root of' with '√'
+            .replace(/([0-9]+) (degree|degrees)/g, '$1°') // Handle cases like "45 degrees"
+            .replace(/\\frac\{(\d+)\}\{(\d+)\}/g, '\\frac{$1}{$2}') // Ensure proper LaTeX fractions
+            .replace(/\\sqrt\{([^}]+)\}/g, '\\sqrt{$1}') // Ensure proper LaTeX square roots
+            .replace(/[#*]/g, '') // Remove hashtags and asterisks
+            .replace(/-/g, ''); // Remove dashes
+    }
+
+    function renderMath() {
+        const input = document.getElementById('mathInput').value;
+        const output = document.getElementById('mathOutput');
+
+        // Apply all text replacements including dashes
+        const sanitizedInput = replaceSymbols(input);
+
+        // Clear previous output
+        output.innerHTML = '';
+
+        // Update the math expression using MathJax
+        output.innerHTML = `\${sanitizedInput} \`;
+        MathJax.typeset();
+    }
+
+    function convertToPDF() {
+        const element = document.getElementById('output');
+
+        // Check if the element is empty
+        if (element.innerHTML.trim() === '') {
+            alert('Please render a math expression before converting to PDF.');
+            return;
+        }
+
+        // Create a new div to ensure correct rendering and style
+        const tempDiv = document.createElement('div');
+        tempDiv.style.fontFamily = 'Arial, sans-serif';
+        tempDiv.style.whiteSpace = 'pre-wrap';
+        tempDiv.style.fontSize = '16px';
+        tempDiv.style.lineHeight = '1.5';
+        tempDiv.style.margin = '0';
+        tempDiv.innerHTML = element.innerHTML;
+        document.body.appendChild(tempDiv);
+
+        // Set options for the PDF conversion with 1-inch margin
+        const options = {
+            margin: [1, 1], // 1-inch margin on all sides
+            filename: 'math_expression.pdf',
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: {
+                scale: 2, // Increase scale for better quality
+                useCORS: true,
+                letterRendering: true
+            },
+            jsPDF: {
+                unit: 'in',
+                format: 'letter',
+                orientation: 'portrait',
+                autoPaging: true // Ensure content is spread across multiple pages
+            }
+        };
+
+        html2pdf().from(tempDiv).set(options).save().catch((error) => {
+            console.error('Error generating PDF:', error);
+            alert('An error occurred while generating the PDF. Check the console for details.');
+        }).finally(() => {
+            document.body.removeChild(tempDiv); // Clean up temporary div
+        });
+    }
+</script>
+
+</body>
+</html>
